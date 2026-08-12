@@ -6,7 +6,7 @@ raw → staging → mart no BigQuery, orquestrado em Dagster, para alimentar
 um dashboard diário de saúde comercial.
 
 > **Status:** em desenvolvimento. Este README cresce a cada dia do
-> desenvolvimento (ver cronograma abaixo). No momento cobre o **Dia 1**.
+> desenvolvimento (ver cronograma abaixo). No momento cobre o **Dia 2**.
 
 ## Cronograma de desenvolvimento
 
@@ -14,7 +14,18 @@ um dashboard diário de saúde comercial.
   (achados reais em cada fonte) e [`docs/adr/`](docs/adr/) (7 decisões de
   arquitetura, cada uma referenciando um achado concreto). Diagrama de
   fluxo em [`docs/02-diagrama-fluxo.md`](docs/02-diagrama-fluxo.md).
-- [ ] Dia 2 — Ingestão: API de vendas + extração do SQLite em chunks.
+- [x] **Dia 2 — Ingestão: API de vendas + extração do SQLite em chunks.**
+  Cliente da API ([`ingestion/api_pedidos.py`](ingestion/api_pedidos.py))
+  com paginação, retry/backoff e cooldown compartilhado entre threads para
+  o rate limit real do serviço (achado documentado na ADR-006). Extração
+  do SQLite em chunks ([`ingestion/sqlite_extract.py`](ingestion/sqlite_extract.py))
+  — `itens_pedido` (5M linhas) nunca é carregado de uma vez, validado com
+  pico de ~54 MB de memória via `tracemalloc`. Landing local + GCS em
+  [`ingestion/storage.py`](ingestion/storage.py). 11 testes automatizados
+  em [`tests/`](tests/) (mocks, sem rede real). Scripts de execução manual
+  em [`scripts/`](scripts/), validados de ponta a ponta contra a API, o
+  `.sqlite` e o bucket reais: 48.000 pedidos e 5.000.000 de itens de
+  pedido ingeridos com sucesso.
 - [ ] Dia 3 — Ingestão: scraping resiliente + grafo Dagster (schedule,
   sensor, retry policy).
 - [ ] Dia 4 — Staging: dedup, tipagem, SCD2, flags de qualidade + dbt
@@ -43,10 +54,20 @@ docs/
   01-descoberta.md        # achados reais nas 3 fontes (evidência)
   02-diagrama-fluxo.md     # diagrama Mermaid da arquitetura
   adr/                     # 7 ADRs, uma decisão por arquivo
+ingestion/                 # API de vendas, extração SQLite, landing/storage
+scripts/                   # CLIs de execução manual da ingestão
+tests/                     # testes automatizados (mocks, sem rede/arquivo real)
+pyproject.toml             # dependências (pip install -e ".[dev]")
+.env.example               # variáveis de ambiente esperadas
 ```
 
-(Pastas de código — `ingestion/`, `dbt/`, `dagster_project/` — chegam a
-partir do Dia 2.)
+Para rodar localmente: copie `.env.example` para `.env`, preencha os
+caminhos/credenciais reais, `pip install -e ".[dev]"` e
+`python scripts/run_ingest_api_pedidos.py` /
+`python scripts/run_ingest_sqlite.py`.
+
+(Pastas de transformação/orquestração — `dbt/`, `dagster_project/` —
+chegam a partir do Dia 3.)
 
 ## Segurança
 
