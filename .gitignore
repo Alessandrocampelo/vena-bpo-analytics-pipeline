@@ -1,0 +1,24 @@
+# Credenciais
+sa-candidato-ae.json
+*.json.key
+.env
+GOOGLE_APPLICATION_CREDENTIALS
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# dbt
+target/
+dbt_packages/
+logs/
+
+# Dagster
+.dagster_home/
+storage/
+
+# Dados locais / landing intermediário
+*.sqlite
+data/landing/
