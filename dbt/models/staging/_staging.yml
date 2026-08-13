@@ -1,0 +1,65 @@
+version: 2
+
+models:
+  - name: stg_clientes_candidato_alessandro
+    description: >
+      Clientes deduplicados por CPF (ADR-004) — uma linha por CPF real,
+      não por cliente_id.
+    columns:
+      - name: cpf
+        description: Chave de identidade real do cliente (ADR-004).
+        tests:
+          - unique
+          - not_null
+      - name: cliente_id
+        tests:
+          - not_null
+
+  - name: stg_produtos_candidato_alessandro
+    description: >
+      Produtos com tipagem defensiva (ativo normalizado para boolean,
+      preco_tabela normalizado para numeric) — ADR-009.
+    columns:
+      - name: produto_id
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_itens_pedido_candidato_alessandro
+    description: >
+      Itens de pedido (5M linhas), incremental por item_id. Nenhuma linha
+      é descartada por FK quebrada (ADR-005) — fk_cliente_valido e
+      fk_produto_valido sinalizam, não filtram.
+    columns:
+      - name: item_id
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_pedidos_api_candidato_alessandro
+    description: >
+      Pedidos da API de vendas (fato distinto de itens_pedido — ADR-003),
+      incremental por pedido_id, upsert por updated_at (ADR-007).
+    columns:
+      - name: pedido_id
+        tests:
+          - unique
+          - not_null
+      - name: status
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['pago', 'pendente', 'cancelado', 'reembolsado']
+
+  - name: stg_precos_concorrentes_candidato_alessandro
+    description: >
+      Cotações de preços de concorrentes — histórico append-only por
+      data_coleta (ADR-009), diferente das demais fontes. linha_via_fallback
+      sinaliza schema drift não coberto pelos 3 layouts conhecidos.
+    columns:
+      - name: produto_nome
+        tests:
+          - not_null
+      - name: concorrente
+        tests:
+          - not_null

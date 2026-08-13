@@ -3,6 +3,8 @@ sa-candidato-ae.json
 *.json.key
 .env
 GOOGLE_APPLICATION_CREDENTIALS
+dbt/profiles.yml
+dbt/.user.yml
 
 # Python
 __pycache__/

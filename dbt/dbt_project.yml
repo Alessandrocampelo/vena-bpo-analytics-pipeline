@@ -1,0 +1,19 @@
+name: "vena_bpo_analytics"
+version: "1.0.0"
+config-version: 2
+
+profile: "vena_bpo_analytics"
+
+model-paths: ["models"]
+snapshot-paths: ["snapshots"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  vena_bpo_analytics:
+    staging:
+      +materialized: view

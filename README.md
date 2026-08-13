@@ -6,7 +6,7 @@ raw → staging → mart no BigQuery, orquestrado em Dagster, para alimentar
 um dashboard diário de saúde comercial.
 
 > **Status:** em desenvolvimento. Este README cresce a cada dia do
-> desenvolvimento (ver cronograma abaixo). No momento cobre o **Dia 3**.
+> desenvolvimento (ver cronograma abaixo). No momento cobre o **Dia 4**.
 
 ## Cronograma de desenvolvimento
 
@@ -39,8 +39,26 @@ um dashboard diário de saúde comercial.
   reais (5.000.000 + 48.000 + 6.180 + 800 + 12 linhas materializadas), e
   o retry/alerta demonstrado provocando uma falha real com
   `FORCE_UNKNOWN_LAYOUT=true`.
-- [ ] Dia 4 — Staging: dedup, tipagem, SCD2, flags de qualidade + dbt
-  tests.
+- [x] **Dia 4 — Staging: dedup, tipagem, SCD2, flags de qualidade + dbt
+  tests.** Projeto dbt em [`dbt/`](dbt/): `stg_clientes` (dedup por CPF,
+  ADR-004), `stg_produtos` (tipagem defensiva de `ativo`/`preco_tabela`),
+  `stg_itens_pedido` (incremental, flags `fk_cliente_valido`/
+  `fk_produto_valido`/`quantidade_valida`, ADR-005), `stg_pedidos_api`
+  (incremental, upsert por `updated_at`), `stg_precos_concorrentes`
+  (histórico append-only, exceção deliberada — ADR-009). SCD2 do cliente
+  via `dbt snapshot` (estratégia `check`), validado com uma mudança real
+  simulada e revertida entre duas execuções, provando o histórico
+  (`dbt_valid_from`/`dbt_valid_to`). 17 testes dbt (unicidade, not_null,
+  `accepted_values`, taxa de FK reportada sem bloquear o build, ausência
+  de sobreposição no SCD2). Integração `dagster-dbt`
+  ([`dagster_project/dbt_assets.py`](dagster_project/dbt_assets.py)):
+  staging entra no mesmo grafo Dagster como assets **dependentes de
+  verdade** dos 5 assets raw — fecha o requisito de DAG com dependências
+  reais que tinha ficado em aberto no Dia 3. Validado de ponta a ponta:
+  materialização completa via Dagster (raw + staging + snapshot) contra
+  API/scraping/SQLite/BigQuery reais, 23/23 nós dbt passando na mesma
+  execução (5.995 clientes deduplicados, 800 produtos, 5.000.000 de itens
+  de pedido com taxa de FK inválida batendo exatamente com o Dia 1).
 - [ ] Dia 5 — Mart + asset checks + prova de idempotência +
   observabilidade.
 - [ ] Dia 6 — Documentação final, seção de uso de IA, revisão geral.
@@ -58,6 +76,7 @@ um dashboard diário de saúde comercial.
 | [ADR-006](docs/adr/ADR-006-resiliencia-ingestao.md) | Concorrência limitada + backoff na API; parser em cadeia no scraping |
 | [ADR-007](docs/adr/ADR-007-idempotencia.md) | Idempotência via `MERGE` por chave natural, não append cego |
 | [ADR-008](docs/adr/ADR-008-carga-raw-bigquery.md) | Carga raw particionada por dia (`WRITE_TRUNCATE`); tabelas com sufixo `_candidato_alessandro` (ver nota abaixo) |
+| [ADR-009](docs/adr/ADR-009-staging-dedup-scd2.md) | Staging: dedup por CPF, tipagem defensiva, SCD2 via `dbt snapshot`, incrementalidade por chave natural |
 
 ## Estrutura do repositório
 
@@ -65,9 +84,10 @@ um dashboard diário de saúde comercial.
 docs/
   01-descoberta.md        # achados reais nas 3 fontes (evidência)
   02-diagrama-fluxo.md     # diagrama Mermaid da arquitetura
-  adr/                     # 8 ADRs, uma decisão por arquivo
+  adr/                     # 9 ADRs, uma decisão por arquivo
 ingestion/                 # API de vendas, scraping, extração SQLite, landing/storage, carga BigQuery
-dagster_project/           # assets, jobs, schedule, sensor, asset checks
+dagster_project/           # assets raw, integração dbt, jobs, schedule, sensor, asset checks
+dbt/                       # projeto dbt: staging (dedup, tipagem), snapshot SCD2, testes
 scripts/                   # CLIs de execução manual da ingestão
 tests/                     # testes automatizados (mocks/fixtures, sem rede/arquivo real)
 pyproject.toml             # dependências (pip install -e ".[dev]")
@@ -75,12 +95,13 @@ pyproject.toml             # dependências (pip install -e ".[dev]")
 ```
 
 Para rodar localmente: copie `.env.example` para `.env`, preencha os
-caminhos/credenciais reais, `pip install -e ".[dev]"` e
-`dagster dev` (UI do Dagster) ou
-`python scripts/run_ingest_api_pedidos.py` / `run_ingest_sqlite.py`
-(CLIs isolados).
-
-(dbt chega no Dia 4.)
+caminhos/credenciais reais, `pip install -e ".[dev]"`, copie
+`dbt/profiles.yml.example` para `dbt/profiles.yml`, e rode
+`dagster dev` (UI do Dagster, materializa raw + staging com dependência
+real entre eles) ou `python scripts/run_ingest_api_pedidos.py` /
+`run_ingest_sqlite.py` (CLIs isolados). Para rodar só o dbt diretamente:
+`cd dbt && DBT_PROFILES_DIR=. dbt build` (com as variáveis do `.env`
+exportadas no shell — dbt não lê `.env` sozinho).
 
 ## Nota sobre o dataset BigQuery
 

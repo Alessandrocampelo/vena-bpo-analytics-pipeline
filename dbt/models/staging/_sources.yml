@@ -1,0 +1,25 @@
+version: 2
+
+sources:
+  - name: raw
+    description: >
+      Camada raw carregada pelo Dagster (dagster_project/assets.py) via
+      ingestion/bq_load.py — particionada por dia, WRITE_TRUNCATE por
+      partição (ADR-008). Sufixo _candidato_alessandro em toda tabela para
+      não colidir com objetos pré-existentes no dataset compartilhado.
+    database: "{{ env_var('BQ_PROJECT_ID') }}"
+    schema: "{{ env_var('BQ_DATASET') }}"
+    tables:
+      - name: raw_clientes_candidato_alessandro
+        description: Cadastro de clientes (SQLite), carga completa a cada execução.
+      - name: raw_produtos_candidato_alessandro
+        description: Cadastro de produtos (SQLite), carga completa a cada execução.
+      - name: raw_itens_pedido_candidato_alessandro
+        description: Itens de pedido (SQLite, 5M linhas), carga completa a cada execução.
+      - name: raw_pedidos_api_candidato_alessandro
+        description: Pedidos da API de vendas, carga completa (48k linhas) a cada execução.
+      - name: raw_precos_concorrentes_candidato_alessandro
+        description: >
+          Cotação de preços de concorrentes via scraping — cada partição é
+          um fato pontual no tempo, não um estado a ser sobrescrito
+          (ADR-009).

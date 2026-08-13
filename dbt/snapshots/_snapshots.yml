@@ -1,0 +1,15 @@
+version: 2
+
+snapshots:
+  - name: scd_clientes_candidato_alessandro
+    description: >
+      SCD2 do histórico de cliente por CPF (ADR-004, ADR-009), estratégia
+      'check' sobre stg_clientes_candidato_alessandro.
+    columns:
+      - name: dbt_scd_id
+        tests:
+          - unique
+          - not_null
+      - name: cpf
+        tests:
+          - not_null
