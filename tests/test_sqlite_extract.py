@@ -16,6 +16,7 @@ def make_config(db_path: str) -> Config:
     return Config(
         api_base_url="unused",
         api_token="unused",
+        scraping_base_url="unused",
         sqlite_db_path=db_path,
         gcs_bucket_name="unused",
         bq_project_id="unused",
@@ -23,6 +24,7 @@ def make_config(db_path: str) -> Config:
         api_max_concurrency=1,
         api_max_retries=1,
         sqlite_chunk_size=10,
+        force_unknown_layout=False,
     )
 
 

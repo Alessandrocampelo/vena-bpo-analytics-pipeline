@@ -13,13 +13,20 @@ dependencies = [
     "pyarrow>=15.0",
     "google-cloud-storage>=2.16",
     "python-dotenv>=1.0",
+    "beautifulsoup4>=4.12",
+    "google-cloud-bigquery>=3.20",
+    "dagster>=1.7",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0",
     "responses>=0.25",
+    "dagster-webserver>=1.7",
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["ingestion"]
+packages = ["ingestion", "dagster_project"]
+
+[tool.dagster]
+module_name = "dagster_project.definitions"

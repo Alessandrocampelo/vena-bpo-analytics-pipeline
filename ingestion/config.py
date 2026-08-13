@@ -12,6 +12,7 @@ load_dotenv()
 class Config:
     api_base_url: str
     api_token: str
+    scraping_base_url: str
     sqlite_db_path: str
     gcs_bucket_name: str
     bq_project_id: str
@@ -19,6 +20,7 @@ class Config:
     api_max_concurrency: int
     api_max_retries: int
     sqlite_chunk_size: int
+    force_unknown_layout: bool
 
 
 def _require(name: str) -> str:
@@ -33,6 +35,7 @@ def load_config() -> Config:
     return Config(
         api_base_url=_require("VENA_API_BASE_URL"),
         api_token=_require("VENA_API_TOKEN"),
+        scraping_base_url=_require("SCRAPING_BASE_URL"),
         sqlite_db_path=_require("SQLITE_DB_PATH"),
         gcs_bucket_name=_require("GCS_BUCKET_NAME"),
         bq_project_id=_require("BQ_PROJECT_ID"),
@@ -40,4 +43,5 @@ def load_config() -> Config:
         api_max_concurrency=int(os.environ.get("API_MAX_CONCURRENCY", "4")),
         api_max_retries=int(os.environ.get("API_MAX_RETRIES", "6")),
         sqlite_chunk_size=int(os.environ.get("SQLITE_CHUNK_SIZE", "50000")),
+        force_unknown_layout=os.environ.get("FORCE_UNKNOWN_LAYOUT", "false").lower() == "true",
     )

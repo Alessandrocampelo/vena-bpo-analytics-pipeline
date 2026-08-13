@@ -27,11 +27,16 @@ def _landing_dir(fonte: str, run_date: date | None) -> Path:
 
 
 def write_json_landing(
-    records: list[dict], fonte: str, run_date: date | None = None, filename: str = "data.json"
+    records: list[dict], fonte: str, run_date: date | None = None, filename: str = "data.ndjson"
 ) -> Path:
-    """Grava records como um único arquivo JSON em data/landing/<fonte>/dt=.../<filename>."""
+    """Grava records como newline-delimited JSON (um objeto por linha).
+
+    NDJSON, não um array JSON único — é o formato que o load job do
+    BigQuery espera para NEWLINE_DELIMITED_JSON (ver ADR-008).
+    """
     target = _landing_dir(fonte, run_date) / filename
-    target.write_text(json.dumps(records, ensure_ascii=False), encoding="utf-8")
+    lines = (json.dumps(record, ensure_ascii=False) for record in records)
+    target.write_text("\n".join(lines), encoding="utf-8")
     return target
 
 

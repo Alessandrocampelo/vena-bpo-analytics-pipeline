@@ -20,6 +20,7 @@ def make_config(**overrides) -> Config:
     defaults = dict(
         api_base_url=API_BASE_URL,
         api_token="test-token",
+        scraping_base_url="unused",
         sqlite_db_path="unused",
         gcs_bucket_name="unused",
         bq_project_id="unused",
@@ -27,6 +28,7 @@ def make_config(**overrides) -> Config:
         api_max_concurrency=3,
         api_max_retries=6,
         sqlite_chunk_size=1000,
+        force_unknown_layout=False,
     )
     defaults.update(overrides)
     return Config(**defaults)
