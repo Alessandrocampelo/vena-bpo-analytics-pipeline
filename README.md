@@ -6,7 +6,7 @@ raw → staging → mart no BigQuery, orquestrado em Dagster, para alimentar
 um dashboard diário de saúde comercial.
 
 > **Status:** em desenvolvimento. Este README cresce a cada dia do
-> desenvolvimento (ver cronograma abaixo). No momento cobre o **Dia 4**.
+> desenvolvimento (ver cronograma abaixo). No momento cobre o **Dia 5**.
 
 ## Cronograma de desenvolvimento
 
@@ -59,8 +59,32 @@ um dashboard diário de saúde comercial.
   API/scraping/SQLite/BigQuery reais, 23/23 nós dbt passando na mesma
   execução (5.995 clientes deduplicados, 800 produtos, 5.000.000 de itens
   de pedido com taxa de FK inválida batendo exatamente com o Dia 1).
-- [ ] Dia 5 — Mart + asset checks + prova de idempotência +
-  observabilidade.
+- [x] **Dia 5 — Mart + asset checks + prova de idempotência +
+  observabilidade.** Camada mart em [`dbt/models/marts/`](dbt/models/marts/):
+  `dim_cliente` (fatia atual do SCD2), `dim_produto` (apresentação para
+  BI), `fct_pedidos_api` e `fct_itens_pedido` (receita com `quantidade`
+  nula tratada como 0, decisão da ADR-005 aplicada de fato), e
+  `mart_saude_comercial` — grão diário, as duas fontes de pedido lado a
+  lado sem forçar unificação (ADR-003). Achado novo: ao contrário de
+  `itens_pedido`, os IDs de cliente/produto da API cabem no universo real
+  — FK legítima, então `fct_pedidos_api` ganhou os mesmos flags de
+  qualidade que `itens_pedido` já tinha. Dois bugs reais de formato de
+  data encontrados e corrigidos nesta camada (`data_item` truncando tudo
+  para `NULL`, 235 pedidos com `data_pedido` em `DD/MM/YYYY` em vez de
+  ISO), documentados com transparência na
+  [ADR-010](docs/adr/ADR-010-mart-saude-comercial.md). **Prova formal de
+  idempotência**: pipeline completo materializado duas vezes seguidas
+  contra o mesmo dia — `COUNT` e checksum (`BIT_XOR(FARM_FINGERPRINT(...))`)
+  idênticos entre as duas execuções em todas as 5 tabelas mart, depois de
+  corrigir um bug real de não-determinismo (soma de dinheiro em `FLOAT64`
+  não é associativa em agregação distribuída — corrigido para `NUMERIC`
+  em `stg_itens_pedido`, incluindo a pegadinha de que um modelo
+  incremental precisa de `--full-refresh` para aplicar mudança de tipo de
+  coluna). Observabilidade: novo asset check
+  (`mart_saude_comercial_metadata_headline`) reportando linhas, receita
+  por fonte e período coberto. Grafo completo (raw → staging → mart)
+  validado de ponta a ponta via Dagster contra API/scraping/SQLite/BigQuery
+  reais.
 - [ ] Dia 6 — Documentação final, seção de uso de IA, revisão geral.
 - [ ] Dia 7 — Buffer, ensaio da apresentação.
 
@@ -77,6 +101,7 @@ um dashboard diário de saúde comercial.
 | [ADR-007](docs/adr/ADR-007-idempotencia.md) | Idempotência via `MERGE` por chave natural, não append cego |
 | [ADR-008](docs/adr/ADR-008-carga-raw-bigquery.md) | Carga raw particionada por dia (`WRITE_TRUNCATE`); tabelas com sufixo `_candidato_alessandro` (ver nota abaixo) |
 | [ADR-009](docs/adr/ADR-009-staging-dedup-scd2.md) | Staging: dedup por CPF, tipagem defensiva, SCD2 via `dbt snapshot`, incrementalidade por chave natural |
+| [ADR-010](docs/adr/ADR-010-mart-saude-comercial.md) | Mart: dimensões/fatos, `mart_saude_comercial` por dia, prova formal de idempotência |
 
 ## Estrutura do repositório
 
@@ -84,10 +109,10 @@ um dashboard diário de saúde comercial.
 docs/
   01-descoberta.md        # achados reais nas 3 fontes (evidência)
   02-diagrama-fluxo.md     # diagrama Mermaid da arquitetura
-  adr/                     # 9 ADRs, uma decisão por arquivo
+  adr/                     # 10 ADRs, uma decisão por arquivo
 ingestion/                 # API de vendas, scraping, extração SQLite, landing/storage, carga BigQuery
 dagster_project/           # assets raw, integração dbt, jobs, schedule, sensor, asset checks
-dbt/                       # projeto dbt: staging (dedup, tipagem), snapshot SCD2, testes
+dbt/                       # projeto dbt: staging, intermediate, marts (dim/fct/mart), snapshot SCD2, testes
 scripts/                   # CLIs de execução manual da ingestão
 tests/                     # testes automatizados (mocks/fixtures, sem rede/arquivo real)
 pyproject.toml             # dependências (pip install -e ".[dev]")

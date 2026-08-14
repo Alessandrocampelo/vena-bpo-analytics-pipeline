@@ -17,6 +17,13 @@
 -- Tipagem defensiva reforçada aqui (não confiar só na normalização já
 -- feita na ingestão, Dia 2, de "593.57 BRL" -> 593.57): staging nunca
 -- assume que o raw chegou limpo.
+--
+-- Achado do Dia 5: 235/48.000 linhas (0,49%) têm data_pedido em formato
+-- "DD/MM/YYYY" em vez do ISO 8601 do resto (mesma classe de problema do
+-- enunciado — "campos em formatos inconsistentes" — só que nesta coluna,
+-- não em valor_unitario). SAFE_CAST sozinho retorna NULL silenciosamente
+-- pra essas linhas; corrigido com um segundo parse via
+-- SAFE.PARSE_TIMESTAMP no formato brasileiro, coalescendo os dois.
 
 with fonte as (
 
@@ -30,7 +37,10 @@ select
     pedido_id,
     cliente_id,
     produto_id,
-    safe_cast(data_pedido as timestamp) as data_pedido,
+    coalesce(
+        safe_cast(data_pedido as timestamp),
+        safe.parse_timestamp('%d/%m/%Y', data_pedido)
+    ) as data_pedido,
     safe_cast(updated_at as timestamp) as updated_at,
     status,
     quantidade,

@@ -65,6 +65,38 @@ def raw_pedidos_api_linhas_batem_com_reportado(context) -> AssetCheckResult:
     )
 
 
+MART_SAUDE_COMERCIAL_TABLE = "mart_saude_comercial_candidato_alessandro"
+
+
+@asset_check(asset=AssetKey(MART_SAUDE_COMERCIAL_TABLE))
+def mart_saude_comercial_metadata_headline(context) -> AssetCheckResult:
+    """Observabilidade da camada final (ADR-010): reporta métricas
+    headline do mart pronto para BI — linhas, receita por fonte (API e
+    itens_pedido, side by side por ADR-003) e período coberto. Sempre
+    'passa' — é um check de reporte, não de validação de limiar."""
+    config = load_config()
+    client = bigquery.Client(project=config.bq_project_id)
+    query = (
+        "select count(*) as linhas, "
+        "sum(receita_api) as receita_api_total, "
+        "sum(receita_itens_pedido) as receita_itens_pedido_total, "
+        "min(data) as data_min, max(data) as data_max "
+        f"from `{config.bq_project_id}.{config.bq_dataset}.{MART_SAUDE_COMERCIAL_TABLE}`"
+    )
+    row = next(iter(client.query(query).result()))
+    return AssetCheckResult(
+        passed=True,
+        metadata={
+            "linhas": row.linhas,
+            # BigQuery NUMERIC vem como decimal.Decimal — Dagster não
+            # serializa esse tipo em metadata sem conversão explícita.
+            "receita_api_total": float(row.receita_api_total or 0),
+            "receita_itens_pedido_total": float(row.receita_itens_pedido_total or 0),
+            "periodo_coberto": f"{row.data_min} a {row.data_max}",
+        },
+    )
+
+
 @asset_check(asset=raw_precos_concorrentes)
 def raw_precos_concorrentes_taxa_fallback(context) -> AssetCheckResult:
     """WARN (não falha o pipeline) se alguma linha veio do parser fallback —

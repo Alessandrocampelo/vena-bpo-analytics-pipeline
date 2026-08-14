@@ -5,6 +5,7 @@
 from dagster import Definitions
 
 from dagster_project.asset_checks import (
+    mart_saude_comercial_metadata_headline,
     raw_itens_pedido_linhas_esperadas,
     raw_pedidos_api_linhas_batem_com_reportado,
     raw_precos_concorrentes_taxa_fallback,
@@ -34,6 +35,7 @@ defs = Definitions(
         raw_itens_pedido_linhas_esperadas,
         raw_pedidos_api_linhas_batem_com_reportado,
         raw_precos_concorrentes_taxa_fallback,
+        mart_saude_comercial_metadata_headline,
     ],
     resources={"dbt": dbt_resource},
     jobs=[daily_raw_job, scraping_job],

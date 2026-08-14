@@ -1,0 +1,50 @@
+version: 2
+
+models:
+  - name: dim_cliente_candidato_alessandro
+    description: >
+      Dimensão de cliente — fatia atual do snapshot SCD2, chave CPF
+      (ADR-004, ADR-010).
+    columns:
+      - name: cpf
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_produto_candidato_alessandro
+    description: >
+      Dimensão de produto com colunas de apresentação para BI (ADR-010).
+    columns:
+      - name: produto_id
+        tests:
+          - unique
+          - not_null
+
+  - name: fct_pedidos_api_candidato_alessandro
+    description: >
+      Fato de vendas via API (ADR-003), com flags de FK e receita
+      calculada tratando quantidade nula como 0 (ADR-010).
+    columns:
+      - name: pedido_id
+        tests:
+          - unique
+          - not_null
+
+  - name: fct_itens_pedido_candidato_alessandro
+    description: >
+      Fato de itens de pedido (5M linhas, ADR-003), receita calculada
+      tratando quantidade nula como 0 (ADR-005/ADR-010).
+    columns:
+      - name: item_id
+        tests:
+          - unique
+          - not_null
+
+  - name: mart_saude_comercial_candidato_alessandro
+    description: >
+      Tabela final pronta para BI — grão por dia, API e itens_pedido lado
+      a lado sem unificar (ADR-003/ADR-010).
+    columns:
+      - name: data
+        tests:
+          - not_null

@@ -17,3 +17,7 @@ models:
   vena_bpo_analytics:
     staging:
       +materialized: view
+    intermediate:
+      +materialized: view
+    marts:
+      +materialized: table
