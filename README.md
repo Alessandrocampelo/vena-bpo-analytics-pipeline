@@ -6,7 +6,7 @@ raw → staging → mart no BigQuery, orquestrado em Dagster, para alimentar
 um dashboard diário de saúde comercial.
 
 > **Status:** em desenvolvimento. Este README cresce a cada dia do
-> desenvolvimento (ver cronograma abaixo). No momento cobre o **Dia 5**.
+> desenvolvimento (ver cronograma abaixo). No momento cobre o **Dia 6**.
 
 ## Cronograma de desenvolvimento
 
@@ -85,7 +85,18 @@ um dashboard diário de saúde comercial.
   por fonte e período coberto. Grafo completo (raw → staging → mart)
   validado de ponta a ponta via Dagster contra API/scraping/SQLite/BigQuery
   reais.
-- [ ] Dia 6 — Documentação final, seção de uso de IA, revisão geral.
+- [x] **Dia 6 — Documentação final, seção de uso de IA, revisão geral.**
+  Diagrama de fluxo ([`docs/02-diagrama-fluxo.md`](docs/02-diagrama-fluxo.md))
+  atualizado para refletir a entrega real (SCD2 dividido em
+  `scd_clientes`+`dim_cliente`, `int_clientes_bridge` incluído,
+  `mart_precos_competitividade` do plano original marcado explicitamente
+  como não implementado, com o porquê). Seção "Uso de IA no
+  desenvolvimento" (abaixo) reescrita cobrindo ferramenta, metodologia,
+  como o código foi revisado (4 casos reais de erro pego por validação
+  contra dado real) e o que ficou como decisão humana. Revisão geral das
+  10 ADRs e do README contra o estado real do repositório; suíte
+  completa (21 testes pytest + 27 testes dbt) reconfirmada verde antes
+  do commit.
 - [ ] Dia 7 — Buffer, ensaio da apresentação.
 
 ## Decisões de arquitetura (ADRs)
@@ -149,6 +160,102 @@ variável de ambiente `GOOGLE_APPLICATION_CREDENTIALS`, conforme
 
 ## Uso de IA no desenvolvimento
 
-Seção detalhada será adicionada ao final do desenvolvimento (Dia 6),
-cobrindo ferramentas usadas, metodologia e o que não foi delegado à IA —
-conforme pedido no enunciado.
+### Ferramenta
+
+[Claude Code](https://claude.com/claude-code) (Anthropic), modelo Sonnet
+5, usado em todas as etapas — descoberta, design, implementação, testes,
+documentação — como par de desenvolvimento dentro do meu editor, com
+acesso direto ao terminal, ao BigQuery, à API e ao scraping reais (não um
+chat à parte colando código).
+
+### Metodologia
+
+**Spec-first, um dia por vez, sem pular etapa.** Cada dia de
+desenvolvimento (o cronograma acima é literal, não retroativo) começou
+com um plano escrito e explícito — decisões de arquitetura formalizadas
+em ADR *antes* de qualquer linha de código, não depois para justificar o
+que já tinha sido feito. Nenhum plano virou código sem eu aprovar
+primeiro; dentro de cada plano, cada passo foi executado e validado
+individualmente, e eu aprovava um por um antes do próximo — nunca "gera
+tudo o dia inteiro e eu reviso no final". Isso deixou o volume de
+trabalho por revisão pequeno o bastante para eu realmente entender cada
+decisão, não só aceitar um diff grande.
+
+**TDD-assistido onde fazia sentido, não como formalidade.** Os testes do
+parser de scraping (`tests/test_scraping_precos.py`) usam fixtures HTML
+capturadas ao vivo do serviço real, não inventadas — o caso do produto
+"Meia Performance (3un)" com parênteses no próprio nome só apareceu
+porque testei contra dado real antes de escrever o parser, não depois.
+Os testes de circuito/retry da API (`tests/test_api_pedidos.py`) usam
+`responses.add_callback` (não respostas estáticas empilhadas) porque uma
+tentativa inicial com respostas estáticas escondia bugs de ordem em
+concorrência — outro caso onde rodar contra o comportamento real (async,
+condição de corrida) revelou uma limitação do que eu tinha pedido de
+teste.
+
+### Como o código gerado foi revisado
+
+Nunca por leitura visual isolada. Toda decisão de peso foi validada
+contra dado ou serviço **real** — BigQuery, API de vendas, scraping,
+SQLite — com números conferidos por query direta, nunca assumidos porque
+"parece certo". Quatro casos concretos, reais, deste repositório, onde
+essa validação pegou um erro genuíno gerado pela IA (todos documentados
+na ADR correspondente, com a correção visível no histórico, não
+escondida):
+
+1. **Retry-After capado errado** (ADR-006): uma primeira correção
+   assumiu, com base num teste anterior mais curto, que o header
+   `Retry-After` da API era pouco confiável e o capou em 10s — isso
+   causou uma falha real (`CircuitBreakerError`) na validação de ponta a
+   ponta seguinte. Só foi pego porque cada mudança era testada contra o
+   serviço real antes de seguir, não por revisão de código.
+2. **`SAFE_CAST(data_item AS DATE)` zerando 5.000.000 de linhas em
+   silêncio** (ADR-010): o formato real de `data_item`
+   (`"2025-05-29 08:33:18"`) não é aceito por `CAST ... AS DATE`, e o
+   `SAFE_CAST` engole o erro devolvendo `NULL` para a coluna inteira sem
+   nenhum aviso — só apareceu numa query de conferência (`MIN`/`MAX` da
+   coluna vindo `NULL`), não por inspeção do SQL gerado.
+3. **235 pedidos com `data_pedido` em `"DD/MM/YYYY"`** em vez de ISO
+   8601 (ADR-010): passou despercebido na amostragem do Dia 1 (~4.000
+   registros) e só apareceu quando um teste de "grão único por data" no
+   mart falhou com 1 linha de `data = NULL` — investiguei a fundo em vez
+   de simplesmente relaxar o teste.
+4. **Soma de dinheiro em `FLOAT64` não-determinística** (ADR-010): a
+   prova de idempotência (rodar o pipeline duas vezes e comparar
+   `COUNT`+checksum) mostrou `COUNT` idêntico mas checksum diferente —
+   investigação por `diff` linha a linha achou que a soma de milhões de
+   linhas em ponto flutuante não é associativa; a causa raiz era
+   `valor_unitario` como `FLOAT64` em vez de `NUMERIC`. Corrigir isso
+   revelou uma segunda pegadinha (modelo incremental não muda o tipo de
+   coluna já materializada sem `--full-refresh`) — só descoberta porque
+   comparei os dois runs de verdade, não porque assumi que "cast
+   resolve".
+
+Em nenhum desses quatro casos o erro foi visível olhando o código — só
+apareceu testando contra comportamento real e comparando números. Isso
+não é um acaso: foi o critério que usei o tempo todo para decidir quando
+uma etapa estava "pronta" — nunca "compilou"/"rodou sem erro", sempre
+"os números batem com o que eu esperava, e eu conferi por quê".
+
+### O que não foi delegado à IA
+
+As decisões de arquitetura e de negócio em si — não a redação delas —
+foram minhas, tomadas em cima de evidência que eu pedi para levantar, não
+escolhas automáticas aceitas de bandeja:
+
+- CPF (não `cliente_id`) como identidade real do cliente (ADR-004);
+  tratar API de vendas e `itens_pedido` como fatos distintos em vez de
+  unificar por `pedido_id` (ADR-003); sinalizar FK quebrada em vez de
+  descartar (ADR-005) — todas nasceram de eu pedir a exploração dos dados
+  primeiro, e decidir depois de ver o achado quantitativo, não de uma
+  sugestão genérica de "boas práticas".
+- **A reação ao achado de um pipeline pré-existente e alheio no dataset
+  compartilhado** (Dia 3, ADR-008) foi explicitamente escalada para mim
+  antes de qualquer ação — a IA parou, reportou o achado e perguntou como
+  proceder, em vez de decidir sozinha nomear as tabelas de um jeito ou
+  apagar/sobrescrever algo.
+- A aprovação de cada plano (via revisão explícita antes de qualquer
+  código) e de cada passo de execução dentro do plano foi manual, um por
+  um, do Dia 2 ao Dia 5 — nenhum dia rodou "no piloto automático".
+- Revisão final de todo o código e da documentação antes de cada commit
+  é minha — inclusive esta seção.
