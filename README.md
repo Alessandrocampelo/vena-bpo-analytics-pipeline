@@ -5,8 +5,10 @@ de preços de concorrentes, banco transacional SQLite) em camadas
 raw → staging → mart no BigQuery, orquestrado em Dagster, para alimentar
 um dashboard diário de saúde comercial.
 
-> **Status:** em desenvolvimento. Este README cresce a cada etapa do
-> desenvolvimento (ver etapas abaixo). No momento cobre a **Etapa 6**.
+> **Status:** concluído. As 6 etapas de desenvolvimento (descoberta e
+> design, ingestão, orquestração, staging, mart e documentação final)
+> foram entregues e validadas de ponta a ponta contra os serviços e
+> dados reais (ver detalhamento abaixo).
 
 ## Etapas do desenvolvimento
 
@@ -97,7 +99,6 @@ um dashboard diário de saúde comercial.
   10 ADRs e do README contra o estado real do repositório; suíte
   completa (21 testes pytest + 27 testes dbt) reconfirmada verde antes
   do commit.
-- [ ] Etapa 7 — Buffer, ensaio da apresentação.
 
 ## Decisões de arquitetura (ADRs)
 

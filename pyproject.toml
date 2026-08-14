@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vena-bpo-analytics-pipeline"
-version = "0.1.0"
+version = "1.0.0"
 description = "Pipeline ELT (API + scraping + SQLite -> BigQuery) para o teste técnico de Analytics Engineer Sênior — Vena BPO"
 requires-python = ">=3.11"
 dependencies = [
