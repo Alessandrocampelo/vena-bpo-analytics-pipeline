@@ -1,6 +1,6 @@
 # ADR-004 — CPF como chave de identidade e de deduplicação do cliente
 
-**Status:** Aceita — Dia 1
+**Status:** Aceita — Etapa 1
 
 ## Contexto
 
@@ -57,6 +57,6 @@ tempo), e isso é *mais frequente* do que duplicidade acidental do próprio
   verificador nos dados de teste; não farei validação de CPF real (fora de
   escopo) — assume-se que o CPF, ainda que sintético, é estável como
   identificador.
-- Teste de qualidade correspondente (Dia 4/5): `dbt test` de unicidade de
+- Teste de qualidade correspondente (Etapa 4/5): `dbt test` de unicidade de
   CPF em `stg_clientes` pós-dedup, e teste de que `cliente_id` → CPF é uma
   função (não ambíguo) antes do merge de SCD2.

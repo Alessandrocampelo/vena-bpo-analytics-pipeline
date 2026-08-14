@@ -1,7 +1,7 @@
 """Parser resiliente do scraping de preços de concorrentes.
 
 A estrutura do HTML muda a cada request (ADR-006) — reexplorado ao vivo
-no Dia 3: são 3 layouts conhecidos, capturados em
+na Etapa 3: são 3 layouts conhecidos, capturados em
 tests/fixtures/scraping_layout_{a,b,c}.html. O parser tenta cada
 estratégia em cadeia; se nenhuma reconhecer, cai num fallback genérico
 por regex; se nem o fallback extrair nada, retorna vazio — quem decide

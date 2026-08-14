@@ -1,6 +1,6 @@
 # ADR-001 — Stack de orquestração e transformação: Dagster + dbt-bigquery
 
-**Status:** Aceita — Dia 1
+**Status:** Aceita — Etapa 1
 
 ## Contexto
 
@@ -51,7 +51,7 @@ incluindo os testes de qualidade (`dbt test`)**.
   boilerplate inicial (perfil dbt, `dbt_project.yml`, integração de
   credenciais da service account em ambos). Aceitável dado o ganho em
   testabilidade.
-- Consequência prática: os asset checks customizados no Dagster (Dia 5)
+- Consequência prática: os asset checks customizados no Dagster (Etapa 5)
   vão focar no que dbt **não** expressa bem (taxa de fallback do parser
   de scraping, prova de idempotência via dupla execução) — não duplicar
   o que já é `dbt test`.

@@ -1,13 +1,13 @@
 # ADR-010 — Mart de saúde comercial: dimensões, fatos e prova de idempotência
 
-**Status:** Aceita — Dia 5
+**Status:** Aceita — Etapa 5
 
 ## Contexto
 
 Faltava a última camada do requisito obrigatório "raw → staging → mart":
 a tabela analítica final pronta para BI que alimenta o dashboard de saúde
 comercial pedido no enunciado. Investigação real feita antes do desenho
-(mesma disciplina dos dias anteriores):
+(mesma disciplina das etapas anteriores):
 
 - **`cliente_id`/`produto_id` da API de vendas cabem inteiramente no
   universo real de `clientes`/`produtos`** (`cliente_id` 1–6000 vs.
@@ -19,11 +19,11 @@ comercial pedido no enunciado. Investigação real feita antes do desenho
   `produto_id`.
 - **`stg_pedidos_api` também tem 245/48.000 (0,51%) linhas com
   `quantidade` nula** — sujeira da mesma natureza da já documentada em
-  `itens_pedido` (ADR-005), não medida no Dia 4 porque `stg_pedidos_api`
+  `itens_pedido` (ADR-005), não medida na Etapa 4 porque `stg_pedidos_api`
   não testava isso ainda. São linhas diferentes das 245 de cliente
   inválido (0 sobreposição confirmada por query) — duas sujeiras
   independentes.
-- **Bug real encontrado nesta investigação, herdado do Dia 4**:
+- **Bug real encontrado nesta investigação, herdado da Etapa 4**:
   `stg_itens_pedido_candidato_alessandro.sql` fazia
   `safe_cast(data_item as date)`, mas `data_item` no raw é uma string
   datetime completa (`"2025-05-29 08:33:18"`). `SAFE_CAST(... AS DATE)`
@@ -41,8 +41,8 @@ comercial pedido no enunciado. Investigação real feita antes do desenho
   `NULL` silenciosamente para essas 235 linhas, que colapsavam num único
   grupo `data = NULL` no `GROUP BY` do mart. É exatamente a mesma classe
   de "formato inconsistente" que o enunciado já avisava (como
-  `valor_unitario = "593.57 BRL"`, tratado no Dia 2) — só que numa coluna
-  diferente, não pega na amostragem do Dia 1. Corrigido em
+  `valor_unitario = "593.57 BRL"`, tratado na Etapa 2) — só que numa coluna
+  diferente, não pega na amostragem da Etapa 1. Corrigido em
   `stg_pedidos_api_candidato_alessandro.sql` com
   `COALESCE(SAFE_CAST(data_pedido AS TIMESTAMP), SAFE.PARSE_TIMESTAMP('%d/%m/%Y', data_pedido))`
   — validado que as 235 linhas passam a parsear corretamente e o teste de
@@ -81,7 +81,7 @@ comercial pedido no enunciado. Investigação real feita antes do desenho
   espelhando o padrão já usado em `itens_pedido`. `receita =
   COALESCE(quantidade, 0) * valor_unitario`.
 - **`fct_itens_pedido_candidato_alessandro`**: `stg_itens_pedido`
-  enriquecido via `cliente_cpf` (já calculado no Dia 4) → `dim_cliente`, e
+  enriquecido via `cliente_cpf` (já calculado na Etapa 4) → `dim_cliente`, e
   `produto_id` → `dim_produto`. Mesma fórmula de receita — aplica agora de
   fato a decisão que a ADR-005 previa para a camada mart (quantidade nula
   tratada como 0 só aqui, nunca na staging).
@@ -101,9 +101,9 @@ comercial pedido no enunciado. Investigação real feita antes do desenho
 - `unique`+`not_null` em `cpf` (dim_cliente), `produto_id` (dim_produto),
   `pedido_id` (fct_pedidos_api), `item_id` (fct_itens_pedido); teste
   singular de grão único por `data` em `mart_saude_comercial`. Como o mart
-  entra no mesmo `@dbt_assets` do Dia 4, esses testes aparecem
+  entra no mesmo `@dbt_assets` da Etapa 4, esses testes aparecem
   automaticamente como Dagster asset checks (confirmado no log real do
-  Dia 4 — cada teste dbt virou um `ASSET_CHECK_EVALUATION`).
+  Etapa 4 — cada teste dbt virou um `ASSET_CHECK_EVALUATION`).
 
 ### Prova formal de idempotência (promessa da ADR-007)
 
@@ -121,7 +121,7 @@ para isso.
 ### Observabilidade
 
 Um asset check Python (mesmo padrão de `dagster_project/asset_checks.py`,
-Dia 3) em `mart_saude_comercial_candidato_alessandro`, reportando
+Etapa 3) em `mart_saude_comercial_candidato_alessandro`, reportando
 metadata headline (linhas, soma de receita por fonte, intervalo de datas
 coberto) — fecha "asset checks reportando métricas" também na camada
 final, não só na raw.
@@ -146,12 +146,12 @@ A primeira tentativa da prova (rodar o job completo duas vezes e comparar
    representações de ponto flutuante ligeiramente diferentes para o
    "mesmo" valor. A causa raiz: `stg_itens_pedido` nunca convertia
    `valor_unitario` para `NUMERIC` (só `stg_pedidos_api` fazia isso desde
-   o Dia 4) — dinheiro estava sendo tratado como `FLOAT64` numa das duas
+   a Etapa 4) — dinheiro estava sendo tratado como `FLOAT64` numa das duas
    fontes. Corrigido: `CAST(valor_unitario AS NUMERIC)` também em
    `stg_itens_pedido` (mesmo tratamento que a API já tinha).
    **Armadilha adicional encontrada ao aplicar a correção**: como
    `stg_itens_pedido` é um modelo **incremental**, um `dbt run` comum faz
-   `MERGE` na tabela já existente (criada no Dia 4 com a coluna em
+   `MERGE` na tabela já existente (criada na Etapa 4 com a coluna em
    `FLOAT64`) — o tipo da coluna já materializada não muda só porque o
    `SELECT` mudou, e o valor `NUMERIC` novo era implicitamente reconvertido
    para `FLOAT64` na hora do merge, mascarando a correção silenciosamente.
@@ -191,7 +191,7 @@ README.
   itens_pedido/API como fatos distintos) sem reabri-las.
 - Positivo: o bug de `data_item` foi pego antes de virar um número errado
   no dashboard final — a mesma disciplina de validar contra dado real que
-  guiou os dias anteriores.
+  guiou as etapas anteriores.
 - Negativo/risco assumido: `mart_saude_comercial` terá dias com uma fonte
   populada e a outra não (os ranges de data de `itens_pedido` e da API não
   se sobrepõem integralmente, achado já registrado na ADR-003) — isso é

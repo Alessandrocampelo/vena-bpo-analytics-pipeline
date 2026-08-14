@@ -1,14 +1,14 @@
 # ADR-008 — Carga raw no BigQuery: partição diária + WRITE_TRUNCATE por partição
 
-**Status:** Aceita — Dia 3
+**Status:** Aceita — Etapa 3
 
 ## Contexto
 
-O Dia 2 entregou ingestão + landing (GCS) para API de vendas e SQLite,
+O Etapa 2 entregou ingestão + landing (GCS) para API de vendas e SQLite,
 mas nada ainda carrega os dados nas tabelas `raw` do BigQuery — essa
 etapa fica naturalmente acoplada à orquestração Dagster (cada asset
 `raw_*` materializa como uma tabela real no dataset
-`vena-teste.teste_tecnico_ae`), então é decidida agora, no Dia 3.
+`vena-teste.teste_tecnico_ae`), então é decidida agora, na Etapa 3.
 
 Requisito de idempotência já fixado na ADR-007: "o pipeline deve poder
 rodar duas vezes seguidas sem duplicar dados". Na camada raw, isso pode
@@ -25,7 +25,7 @@ completa de uma fatia bem definida dos dados (partição por dia).
   `write_disposition=WRITE_TRUNCATE`.
 - Schema é autodetectado a partir do Parquet/NDJSON em GCS
   (`autodetect=True`) — a camada raw é fiel à fonte, sem tipagem manual
-  (isso é trabalho da staging, Dia 4).
+  (isso é trabalho da staging, Etapa 4).
 
 ## Alternativas consideradas
 
@@ -41,16 +41,16 @@ completa de uma fatia bem definida dos dados (partição por dia).
   problema já rejeitado na ADR-007 (empurra custo de dedup pra toda
   leitura, e polui o histórico raw com execuções repetidas do mesmo dia).
 
-## Atualização (Dia 3) — nomes de tabela com sufixo `_candidato_alessandro`
+## Atualização (Etapa 3) — nomes de tabela com sufixo `_candidato_alessandro`
 
 Ao validar a carga de `raw_produtos` contra o dataset real, o load falhou
 (`BadRequest: Cannot add storage to a non-partitioned table...`) porque
 **o dataset `vena-teste.teste_tecnico_ae` já continha um pipeline
 completo pré-existente** — `raw_*`, `stg_*`, `dim_*`/`fct_*`,
 `mart_saude_comercial_diaria` — com dados reais, criado em 31/07 e
-01/08/2026, **antes do início deste trabalho** (Dia 1 começou em
+01/08/2026, **antes do início deste trabalho** (Etapa 1 começou em
 11/08/2026). Não fui eu quem criou: nunca havia tocado o BigQuery neste
-projeto antes deste passo (Dias 1-2 só usaram GCS).
+projeto antes deste passo (Etapas 1-2 só usaram GCS).
 
 Reportei o achado ao avaliador antes de prosseguir (pode ser uma
 referência dele deixada por engano no dataset compartilhado, ou dado de

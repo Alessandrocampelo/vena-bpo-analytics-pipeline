@@ -16,9 +16,9 @@
 -- dedup ainda é um cliente real, só não é mais o "vencedor" da dimensão;
 -- não pode virar FK inválida por causa disso. int_clientes_bridge também
 -- carrega o cpf, que é o que liga cada item ao cliente deduplicado
--- (dim_cliente) no mart (Dia 5) — a FK de itens_pedido aponta pro
+-- (dim_cliente) no mart (Etapa 5) — a FK de itens_pedido aponta pro
 -- cliente_id bruto, não pro cpf. Promovido de CTE inline para modelo
--- próprio no Dia 5 (ADR-010) por ter ganho um segundo consumidor
+-- próprio na Etapa 5 (ADR-010) por ter ganho um segundo consumidor
 -- (fct_pedidos_api).
 
 with fonte as (
@@ -50,11 +50,11 @@ select
     f.produto_id,
     -- data_item vem como datetime completo ("2025-05-29 08:33:18"), não
     -- só data — SAFE_CAST(... AS DATE) falha silenciosamente pra esse
-    -- formato e retornava NULL pra tudo (bug real do Dia 4, corrigido no
-    -- Dia 5, ADR-010). SAFE_CAST(... AS DATETIME) aceita o formato.
+    -- formato e retornava NULL pra tudo (bug real da Etapa 4, corrigido no
+    -- Etapa 5, ADR-010). SAFE_CAST(... AS DATETIME) aceita o formato.
     safe_cast(f.data_item as datetime) as data_item,
     f.quantidade,
-    -- NUMERIC, não FLOAT64 (achado do Dia 5): dinheiro somado como ponto
+    -- NUMERIC, não FLOAT64 (achado da Etapa 5): dinheiro somado como ponto
     -- flutuante sobre milhões de linhas não é reprodutível bit-a-bit entre
     -- execuções (soma de float não é associativa) — quebrava a prova de
     -- idempotência de mart_saude_comercial (COUNT igual, checksum

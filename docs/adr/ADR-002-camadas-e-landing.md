@@ -1,6 +1,6 @@
 # ADR-002 — Camadas raw/staging/mart, landing via GCS e carga em lote (não streaming)
 
-**Status:** Aceita — Dia 1
+**Status:** Aceita — Etapa 1
 
 ## Contexto
 
@@ -41,7 +41,7 @@ de como os dados chegam ao BigQuery.
 
 ## Consequências
 
-- Positivo: o passo de extração do SQLite (Dia 2) fica simples de
+- Positivo: o passo de extração do SQLite (Etapa 2) fica simples de
   implementar corretamente desde o início — cursor sequencial, sem
   `OFFSET` gigante, sem pressão de memória, independentemente de o volume
   crescer no futuro.

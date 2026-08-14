@@ -1,7 +1,7 @@
 {{ config(severity='warn') }}
 
 -- Reporta (não bloqueia o build) se a taxa de FK inválida em itens_pedido
--- sair muito do range observado no Dia 1 (~1,50% cliente, ~1,49%
+-- sair muito do range observado na Etapa 1 (~1,50% cliente, ~1,49%
 -- produto) — sinal de mudança na fonte a investigar, não motivo para
 -- falhar o pipeline (ADR-005: sinalizar, nunca descartar/bloquear por
 -- causa de uma sujeira já esperada e conhecida). Severity 'warn' garante

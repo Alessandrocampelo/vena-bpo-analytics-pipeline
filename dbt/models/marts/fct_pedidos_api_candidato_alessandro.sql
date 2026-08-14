@@ -5,7 +5,7 @@
 }}
 
 -- Fato de vendas via API (ADR-003: distinto de itens_pedido, não unificar
--- por pedido_id/cliente_id/produto_id). Achado do Dia 5 (ADR-010): ao
+-- por pedido_id/cliente_id/produto_id). Achado da Etapa 5 (ADR-010): ao
 -- contrário de itens_pedido, cliente_id/produto_id da API cabem
 -- inteiramente no universo real de clientes/produtos — FK legítima, por
 -- isso ganha o mesmo tratamento de flags que itens_pedido (ADR-005),

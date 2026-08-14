@@ -2,7 +2,7 @@
 
 Decisões aplicadas aqui vêm de docs/adr/ADR-006-resiliencia-ingestao.md.
 
-Achado empírico (Dia 2): o rate limit da API não é por conexões
+Achado empírico (Etapa 2): o rate limit da API não é por conexões
 simultâneas — é burst (~20 requisições) + cooldown, aplicado pelo
 servidor independentemente de quantas threads o cliente usa (medido com
 concorrência 4 e 8: mesmo tempo total). Por isso o retry não usa backoff

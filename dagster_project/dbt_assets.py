@@ -1,8 +1,8 @@
-"""Integração dbt <-> Dagster (Dia 4): a camada staging (dbt/models,
+"""Integração dbt <-> Dagster (Etapa 4): a camada staging (dbt/models,
 snapshots, tests) entra no mesmo grafo Dagster como assets dependentes dos
 5 assets raw já existentes (dagster_project/assets.py) — fecha a exigência
 "DAG com dependências reais entre assets" que ficou deliberadamente em
-aberto no Dia 3, quando os 5 assets raw eram paralelos entre si.
+aberto na Etapa 3, quando os 5 assets raw eram paralelos entre si.
 
 A ligação raw -> staging é feita mapeando cada source dbt
 (dbt/models/staging/_sources.yml, sempre "<base>_candidato_alessandro")

@@ -3,8 +3,8 @@ Dagster só orquestra, não reimplementa lógica de ingestão (ver ADR-001).
 
 Sem dependência real *entre* esses 5 assets — todos são leitura de fonte,
 independentes uns dos outros. A dependência real raw -> staging -> mart
-aparece no Dia 4, quando os modelos dbt referenciarem esses assets via
-dagster-dbt (decisão registrada na ADR-001 e no plano do Dia 3).
+aparece na Etapa 4, quando os modelos dbt referenciarem esses assets via
+dagster-dbt (decisão registrada na ADR-001 e no plano da Etapa 3).
 """
 
 from datetime import date

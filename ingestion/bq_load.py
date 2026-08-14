@@ -18,7 +18,7 @@ from ingestion.config import Config
 logger = logging.getLogger(__name__)
 
 # O dataset compartilhado já continha tabelas raw_*/stg_*/mart_*
-# pré-existentes (de origem alheia a este trabalho, anteriores ao Dia 1 —
+# pré-existentes (de origem alheia a este trabalho, anteriores à Etapa 1 —
 # ver ADR-008). Esse sufixo evita colidir com esses objetos sem apagá-los
 # ou modificá-los; toda tabela criada por este pipeline passa por
 # raw_table_name() em vez de montar o nome manualmente.

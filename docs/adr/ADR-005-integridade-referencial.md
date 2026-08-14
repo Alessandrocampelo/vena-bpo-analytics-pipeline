@@ -1,6 +1,6 @@
 # ADR-005 — FK quebrada em `itens_pedido`: sinalizar, nunca descartar
 
-**Status:** Aceita — Dia 1
+**Status:** Aceita — Etapa 1
 
 ## Contexto
 
@@ -41,7 +41,7 @@ sem avisar.
   correspondência.
 - O mart expõe uma métrica própria de qualidade: `% de linhas com FK
   válida por dia de carga` — vira parte do asset check de observabilidade
-  (Dia 5), não só um número escondido em log.
+  (Etapa 5), não só um número escondido em log.
 
 ## Alternativas consideradas
 

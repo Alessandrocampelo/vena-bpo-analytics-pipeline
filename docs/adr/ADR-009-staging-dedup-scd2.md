@@ -1,10 +1,10 @@
 # ADR-009 — Staging: dedup, tipagem, SCD2 e estratégia incremental
 
-**Status:** Aceita — Dia 4
+**Status:** Aceita — Etapa 4
 
 ## Contexto
 
-A camada `raw` (Dia 3) carrega, a cada execução, o **estado atual completo**
+A camada `raw` (Etapa 3) carrega, a cada execução, o **estado atual completo**
 de cada fonte — a API de vendas sempre devolve as 48.000 linhas correntes,
 e o SQLite é lido por inteiro a cada run. Cada carga fica isolada na
 partição do dia (`WRITE_TRUNCATE` por `$YYYYMMDD`, ADR-008). Isso muda a
@@ -13,7 +13,7 @@ partições históricas (leria o mesmo dado se repetindo N vezes); cada modelo
 de staging lê **só a partição mais recente** disponível de cada tabela raw.
 
 Os requisitos obrigatórios do teste para esta camada são: deduplicação,
-tipagem, e **SCD2 para o histórico de clientes** — e os achados do Dia 1
+tipagem, e **SCD2 para o histórico de clientes** — e os achados da Etapa 1
 (ADR-004, ADR-005) já determinam boa parte do "como".
 
 ## Decisão
@@ -21,7 +21,7 @@ tipagem, e **SCD2 para o histórico de clientes** — e os achados do Dia 1
 ### Nomenclatura — mesmo sufixo `_candidato_alessandro` da raw (ADR-008)
 
 O dataset compartilhado já continha, antes deste trabalho, objetos
-`stg_*`/`dim_*`/`fct_*`/`mart_*` de origem alheia (achado do Dia 3,
+`stg_*`/`dim_*`/`fct_*`/`mart_*` de origem alheia (achado da Etapa 3,
 ADR-008). A mesma colisão vale para staging: todo modelo dbt materializado
 por este projeto usa o sufixo `_candidato_alessandro` **no próprio nome do
 arquivo** (ex.: `stg_clientes_candidato_alessandro.sql`), já que por padrão
@@ -51,7 +51,7 @@ seção própria abaixo).
 
 ### `stg_clientes` — dedup por CPF (ADR-004)
 
-- Chave de dedup: `cpf`, não `cliente_id` (achado do Dia 1: 185 CPFs
+- Chave de dedup: `cpf`, não `cliente_id` (achado da Etapa 1: 185 CPFs
   duplicados vs. 12 `cliente_id` duplicados — CPF é a identidade real).
 - Critério de desempate por CPF repetido: mantém a linha com **mais
   campos não nulos preenchidos** (maior completude); em empate, a de
@@ -59,8 +59,8 @@ seção própria abaixo).
   (PARTITION BY cpf ORDER BY completude DESC, data_cadastro DESC)`.
 - Tipagem: `data_cadastro` (`TEXT` no raw) convertida para `DATE`.
   `estado`/`segmento`/`email` nulos permanecem `NULL` — não viram string
-  `"desconhecido"` aqui; isso é decisão de apresentação do mart (Dia 5).
-- Mojibake em `nome` (achado do Dia 1: `"Srta. Alexia Ara�jo"`) **não é
+  `"desconhecido"` aqui; isso é decisão de apresentação do mart (Etapa 5).
+- Mojibake em `nome` (achado da Etapa 1: `"Srta. Alexia Ara�jo"`) **não é
   corrigido** nesta staging — não há forma confiável de recuperar o
   caractere original sem acesso ao encoding de origem; documentado como
   limitação conhecida, não escondida.
@@ -81,7 +81,7 @@ seção própria abaixo).
 ### `stg_produtos` — tipagem defensiva
 
 - `ativo` (`TEXT`) tem duas convenções booleanas concorrentes nos dados
-  reais: `'0'/'1'` e `'S'/'N'`, mais `NULL` (achado do Dia 1). Mapeado
+  reais: `'0'/'1'` e `'S'/'N'`, mais `NULL` (achado da Etapa 1). Mapeado
   explicitamente: `'1'`/`'S'` → `true`, `'0'`/`'N'` → `false`, qualquer
   outro valor (incluindo `NULL`) → `NULL`. Não assume-se `CAST(ativo AS
   BOOL)` direto — quebraria em `'S'/'N'`.
@@ -90,7 +90,7 @@ seção própria abaixo).
   `parse_valor_unitario` (`ingestion/api_pedidos.py`), reimplementada em
   SQL (não dá para reaproveitar código Python dentro de um modelo dbt).
 - `produto_id` já é chave íntegra (800 valores distintos, achado do
-  Dia 1) — sem dedup necessário, só tipagem.
+  Etapa 1) — sem dedup necessário, só tipagem.
 
 ### `stg_itens_pedido` — incremental + flags de FK (ADR-005)
 
@@ -105,7 +105,7 @@ seção própria abaixo).
   (`quantidade IS NOT NULL`).
 - `quantidade` **permanece `NULL`** na staging quando ausente — o
   `COALESCE(quantidade, 0)` para soma de receita é decisão do mart
-  (Dia 5), não da staging, conforme já registrado na ADR-005.
+  (Etapa 5), não da staging, conforme já registrado na ADR-005.
 
 ### `stg_pedidos_api` — incremental + upsert por `updated_at` (ADR-007)
 
@@ -114,7 +114,7 @@ seção própria abaixo).
   (`pago` → `cancelado`/`reembolsado`) de pedidos já carregados
   anteriormente, sem duplicar.
 - Tipagem defensiva de `valor_unitario` reforçada também aqui (não confiar
-  só na normalização já feita na ingestão, Dia 2) — staging não assume
+  só na normalização já feita na ingestão, Etapa 2) — staging não assume
   que o raw está sempre limpo.
 
 ### `stg_precos_concorrentes` — exceção: histórico append-only
@@ -127,7 +127,7 @@ seção própria abaixo).
   Sem dedup entre dias.
 - `linha_via_fallback = (_parser_strategy = 'fallback')` como flag
   explícita de qualidade — insumo direto do asset check de taxa de
-  fallback já existente no Dagster (Dia 3).
+  fallback já existente no Dagster (Etapa 3).
 
 ## Alternativas consideradas
 
@@ -147,7 +147,7 @@ seção própria abaixo).
 
 ## Consequências
 
-- Positivo: staging reflete fielmente as decisões já tomadas no Dia 1
+- Positivo: staging reflete fielmente as decisões já tomadas na Etapa 1
   (CPF como identidade, FK sinalizada não descartada) sem reabrir essas
   discussões.
 - Positivo: SCD2 é uma propriedade verificável (histórico real via

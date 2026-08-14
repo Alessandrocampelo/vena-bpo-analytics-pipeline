@@ -1,6 +1,6 @@
 # ADR-007 — Idempotência via MERGE por chave natural, não append cego
 
-**Status:** Aceita — Dia 1 (prova formal de idempotência no Dia 5)
+**Status:** Aceita — Etapa 1 (prova formal de idempotência na Etapa 5)
 
 ## Contexto
 
@@ -30,7 +30,7 @@ mudança de status de um pedido já carregado anteriormente.
 - **Staging/Mart (dbt)**: modelos incrementais com `unique_key` (
   `incremental_strategy: merge`) — reprocessar não duplica porque o merge
   é por chave de negócio, não por append.
-- **Prova formal de idempotência** (Dia 5): materializar o DAG completo
+- **Prova formal de idempotência** (Etapa 5): materializar o DAG completo
   duas vezes seguidas contra o mesmo dia de dados e comparar `COUNT(*)` +
   checksum agregado (`SUM`/`hash` de colunas-chave) de cada tabela mart
   entre a 1ª e a 2ª execução — isso é um asset check formal, não só uma

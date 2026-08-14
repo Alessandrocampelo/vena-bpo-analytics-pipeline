@@ -1,6 +1,6 @@
 # ADR-003 — API de vendas e `itens_pedido` (SQLite) são tratados como fatos distintos
 
-**Status:** Aceita — Dia 1
+**Status:** Aceita — Etapa 1
 
 ## Contexto
 

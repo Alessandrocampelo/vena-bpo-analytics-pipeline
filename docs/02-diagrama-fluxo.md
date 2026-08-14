@@ -1,8 +1,8 @@
 # Diagrama de Fluxo
 
-Diagrama de referência da arquitetura, escrito no Dia 1 (antes de
-qualquer implementação) e atualizado no Dia 6 para refletir o que foi de
-fato construído entre os Dias 2-5 — as duas divergências reais entre o
+Diagrama de referência da arquitetura, escrito na Etapa 1 (antes de
+qualquer implementação) e atualizado na Etapa 6 para refletir o que foi de
+fato construído entre as Etapas 2-5 — as duas divergências reais entre o
 plano original e a entrega estão marcadas explicitamente abaixo, não
 escondidas.
 
@@ -103,12 +103,12 @@ flowchart TB
   ponto de reprocessamento; a API/scraping não precisam ser consultados de
   novo para reconstruir `staging`/`mart`.
 
-## Divergências entre este diagrama (Dia 1) e a entrega final (Dia 5)
+## Divergências entre este diagrama (Etapa 1) e a entrega final (Etapa 5)
 
 Documentadas aqui em vez de corrigidas silenciosamente:
 
 - **Não existe `mart_precos_competitividade`.** O diagrama original do
-  Dia 1 previa um segundo mart comparando preços próprios vs.
+  Etapa 1 previa um segundo mart comparando preços próprios vs.
   concorrentes. O enunciado pede uma tabela final para BI
   (`mart_saude_comercial`, entregue) — um mart de competitividade de
   preços era ambição extra, não requisito obrigatório, e ficou de fora
@@ -119,7 +119,7 @@ Documentadas aqui em vez de corrigidas silenciosamente:
 - **`dim_clientes_scd2` virou dois modelos** (`scd_clientes` +
   `dim_cliente`), não um só — ver nota acima.
 
-## O que foi entregue (Dias 2-5, todo validado contra serviços/dados reais)
+## O que foi entregue (Etapas 2-5, todo validado contra serviços/dados reais)
 
 - Ingestão resiliente das 3 fontes (retry/backoff, cooldown compartilhado,
   parser em cadeia com fallback) — `ingestion/`.

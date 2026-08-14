@@ -5,16 +5,16 @@ de preços de concorrentes, banco transacional SQLite) em camadas
 raw → staging → mart no BigQuery, orquestrado em Dagster, para alimentar
 um dashboard diário de saúde comercial.
 
-> **Status:** em desenvolvimento. Este README cresce a cada dia do
-> desenvolvimento (ver cronograma abaixo). No momento cobre o **Dia 6**.
+> **Status:** em desenvolvimento. Este README cresce a cada etapa do
+> desenvolvimento (ver etapas abaixo). No momento cobre a **Etapa 6**.
 
-## Cronograma de desenvolvimento
+## Etapas do desenvolvimento
 
-- [x] **Dia 1 — Descoberta + design.** Ver [`docs/01-descoberta.md`](docs/01-descoberta.md)
+- [x] **Etapa 1 — Descoberta + design.** Ver [`docs/01-descoberta.md`](docs/01-descoberta.md)
   (achados reais em cada fonte) e [`docs/adr/`](docs/adr/) (7 decisões de
   arquitetura, cada uma referenciando um achado concreto). Diagrama de
   fluxo em [`docs/02-diagrama-fluxo.md`](docs/02-diagrama-fluxo.md).
-- [x] **Dia 2 — Ingestão: API de vendas + extração do SQLite em chunks.**
+- [x] **Etapa 2 — Ingestão: API de vendas + extração do SQLite em chunks.**
   Cliente da API ([`ingestion/api_pedidos.py`](ingestion/api_pedidos.py))
   com paginação, retry/backoff e cooldown compartilhado entre threads para
   o rate limit real do serviço (achado documentado na ADR-006). Extração
@@ -26,7 +26,7 @@ um dashboard diário de saúde comercial.
   em [`scripts/`](scripts/), validados de ponta a ponta contra a API, o
   `.sqlite` e o bucket reais: 48.000 pedidos e 5.000.000 de itens de
   pedido ingeridos com sucesso.
-- [x] **Dia 3 — Ingestão: scraping resiliente + grafo Dagster (schedule,
+- [x] **Etapa 3 — Ingestão: scraping resiliente + grafo Dagster (schedule,
   sensor, retry policy).** Parser em cadeia para os 3 layouts reais do
   scraping + fallback ([`ingestion/scraping_precos.py`](ingestion/scraping_precos.py)),
   testado com fixtures HTML reais e validado contra o serviço ao vivo (0
@@ -39,7 +39,7 @@ um dashboard diário de saúde comercial.
   reais (5.000.000 + 48.000 + 6.180 + 800 + 12 linhas materializadas), e
   o retry/alerta demonstrado provocando uma falha real com
   `FORCE_UNKNOWN_LAYOUT=true`.
-- [x] **Dia 4 — Staging: dedup, tipagem, SCD2, flags de qualidade + dbt
+- [x] **Etapa 4 — Staging: dedup, tipagem, SCD2, flags de qualidade + dbt
   tests.** Projeto dbt em [`dbt/`](dbt/): `stg_clientes` (dedup por CPF,
   ADR-004), `stg_produtos` (tipagem defensiva de `ativo`/`preco_tabela`),
   `stg_itens_pedido` (incremental, flags `fk_cliente_valido`/
@@ -54,12 +54,12 @@ um dashboard diário de saúde comercial.
   ([`dagster_project/dbt_assets.py`](dagster_project/dbt_assets.py)):
   staging entra no mesmo grafo Dagster como assets **dependentes de
   verdade** dos 5 assets raw — fecha o requisito de DAG com dependências
-  reais que tinha ficado em aberto no Dia 3. Validado de ponta a ponta:
+  reais que tinha ficado em aberto na Etapa 3. Validado de ponta a ponta:
   materialização completa via Dagster (raw + staging + snapshot) contra
   API/scraping/SQLite/BigQuery reais, 23/23 nós dbt passando na mesma
   execução (5.995 clientes deduplicados, 800 produtos, 5.000.000 de itens
-  de pedido com taxa de FK inválida batendo exatamente com o Dia 1).
-- [x] **Dia 5 — Mart + asset checks + prova de idempotência +
+  de pedido com taxa de FK inválida batendo exatamente com a Etapa 1).
+- [x] **Etapa 5 — Mart + asset checks + prova de idempotência +
   observabilidade.** Camada mart em [`dbt/models/marts/`](dbt/models/marts/):
   `dim_cliente` (fatia atual do SCD2), `dim_produto` (apresentação para
   BI), `fct_pedidos_api` e `fct_itens_pedido` (receita com `quantidade`
@@ -85,7 +85,7 @@ um dashboard diário de saúde comercial.
   por fonte e período coberto. Grafo completo (raw → staging → mart)
   validado de ponta a ponta via Dagster contra API/scraping/SQLite/BigQuery
   reais.
-- [x] **Dia 6 — Documentação final, seção de uso de IA, revisão geral.**
+- [x] **Etapa 6 — Documentação final, seção de uso de IA, revisão geral.**
   Diagrama de fluxo ([`docs/02-diagrama-fluxo.md`](docs/02-diagrama-fluxo.md))
   atualizado para refletir a entrega real (SCD2 dividido em
   `scd_clientes`+`dim_cliente`, `int_clientes_bridge` incluído,
@@ -97,7 +97,7 @@ um dashboard diário de saúde comercial.
   10 ADRs e do README contra o estado real do repositório; suíte
   completa (21 testes pytest + 27 testes dbt) reconfirmada verde antes
   do commit.
-- [ ] Dia 7 — Buffer, ensaio da apresentação.
+- [ ] Etapa 7 — Buffer, ensaio da apresentação.
 
 ## Decisões de arquitetura (ADRs)
 
@@ -141,10 +141,10 @@ exportadas no shell — dbt não lê `.env` sozinho).
 
 ## Nota sobre o dataset BigQuery
 
-Ao validar a primeira carga no Dia 3, encontrei um pipeline completo
+Ao validar a primeira carga na Etapa 3, encontrei um pipeline completo
 (`raw_*`/`stg_*`/`dim_*`/`fct_*`/`mart_*`) já existente no dataset
 compartilhado `vena-teste.teste_tecnico_ae`, criado em 31/07–01/08/2026 —
-antes do início deste trabalho (Dia 1 começou em 11/08). Não fui eu quem
+antes do início deste trabalho (Etapa 1 começou em 11/08). Não fui eu quem
 criou. Reportei o achado antes de prosseguir; a decisão combinada foi
 usar o sufixo `_candidato_alessandro` em toda tabela criada por este
 pipeline, para não colidir com os objetos pré-existentes sem apagá-los
@@ -170,14 +170,14 @@ chat à parte colando código).
 
 ### Metodologia
 
-**Spec-first, um dia por vez, sem pular etapa.** Cada dia de
-desenvolvimento (o cronograma acima é literal, não retroativo) começou
+**Spec-first, uma etapa por vez, sem pular nenhuma.** Cada etapa de
+desenvolvimento (a lista acima é literal, não retroativa) começou
 com um plano escrito e explícito — decisões de arquitetura formalizadas
 em ADR *antes* de qualquer linha de código, não depois para justificar o
 que já tinha sido feito. Nenhum plano virou código sem eu aprovar
 primeiro; dentro de cada plano, cada passo foi executado e validado
 individualmente, e eu aprovava um por um antes do próximo — nunca "gera
-tudo o dia inteiro e eu reviso no final". Isso deixou o volume de
+tudo de uma vez e eu reviso no final". Isso deixou o volume de
 trabalho por revisão pequeno o bastante para eu realmente entender cada
 decisão, não só aceitar um diff grande.
 
@@ -216,7 +216,7 @@ escondida):
    nenhum aviso — só apareceu numa query de conferência (`MIN`/`MAX` da
    coluna vindo `NULL`), não por inspeção do SQL gerado.
 3. **235 pedidos com `data_pedido` em `"DD/MM/YYYY"`** em vez de ISO
-   8601 (ADR-010): passou despercebido na amostragem do Dia 1 (~4.000
+   8601 (ADR-010): passou despercebido na amostragem da Etapa 1 (~4.000
    registros) e só apareceu quando um teste de "grão único por data" no
    mart falhou com 1 linha de `data = NULL` — investiguei a fundo em vez
    de simplesmente relaxar o teste.
@@ -250,12 +250,12 @@ escolhas automáticas aceitas de bandeja:
   primeiro, e decidir depois de ver o achado quantitativo, não de uma
   sugestão genérica de "boas práticas".
 - **A reação ao achado de um pipeline pré-existente e alheio no dataset
-  compartilhado** (Dia 3, ADR-008) foi explicitamente escalada para mim
+  compartilhado** (Etapa 3, ADR-008) foi explicitamente escalada para mim
   antes de qualquer ação — a IA parou, reportou o achado e perguntou como
   proceder, em vez de decidir sozinha nomear as tabelas de um jeito ou
   apagar/sobrescrever algo.
 - A aprovação de cada plano (via revisão explícita antes de qualquer
   código) e de cada passo de execução dentro do plano foi manual, um por
-  um, do Dia 2 ao Dia 5 — nenhum dia rodou "no piloto automático".
+  um, da Etapa 2 à Etapa 5 — nenhuma etapa rodou "no piloto automático".
 - Revisão final de todo o código e da documentação antes de cada commit
   é minha — inclusive esta seção.

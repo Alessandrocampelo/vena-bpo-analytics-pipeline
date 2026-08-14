@@ -1,6 +1,6 @@
 # ADR-006 — Resiliência de ingestão: concorrência limitada + backoff na API, parser em cadeia no scraping
 
-**Status:** Aceita — Dia 1 (implementação detalhada no Dia 3)
+**Status:** Aceita — Etapa 1 (implementação detalhada na Etapa 3)
 
 ## Contexto
 
@@ -19,7 +19,7 @@ Testes de reconhecimento feitos ao vivo (`docs/01-descoberta.md`):
 **Ingestão da API:**
 - Concorrência limitada a **8 requisições simultâneas** (`ThreadPoolExecutor`,
   configurável via `API_MAX_CONCURRENCY`) — abaixo do limiar de ~14
-  observado no Dia 1. Concorrência aqui é sobre paralelizar as páginas que
+  observado na Etapa 1. Concorrência aqui é sobre paralelizar as páginas que
   *não* estão bloqueadas, não sobre acelerar o rate limit em si (ver
   atualização abaixo).
 - Retry com `tenacity` em `429`/`500`/erro de conexão, teto de 6
@@ -38,7 +38,7 @@ Testes de reconhecimento feitos ao vivo (`docs/01-descoberta.md`):
   completo" silenciosamente para um dataset que será usado num dashboard
   financeiro.
 
-**Atualização (Dia 2) — o que a medição real ensinou:**
+**Atualização (Etapa 2) — o que a medição real ensinou:**
 Ao implementar o cliente, medi o tempo do pull completo (96 páginas) e
 testei três hipóteses, nessa ordem:
 1. *"É concorrência"* — rodei com concorrência 4 e depois 8: **tempo

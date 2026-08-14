@@ -12,13 +12,13 @@
 -- pull mais recente nunca regride em relação ao anterior, é sempre o
 -- estado corrente reportado pelo servidor. Isso captura transição de
 -- status (pago -> cancelado/reembolsado) de pedidos já carregados antes,
--- sem duplicar (achado do Dia 1: updated_at avança quando o status muda).
+-- sem duplicar (achado da Etapa 1: updated_at avança quando o status muda).
 --
 -- Tipagem defensiva reforçada aqui (não confiar só na normalização já
--- feita na ingestão, Dia 2, de "593.57 BRL" -> 593.57): staging nunca
+-- feita na ingestão, Etapa 2, de "593.57 BRL" -> 593.57): staging nunca
 -- assume que o raw chegou limpo.
 --
--- Achado do Dia 5: 235/48.000 linhas (0,49%) têm data_pedido em formato
+-- Achado da Etapa 5: 235/48.000 linhas (0,49%) têm data_pedido em formato
 -- "DD/MM/YYYY" em vez do ISO 8601 do resto (mesma classe de problema do
 -- enunciado — "campos em formatos inconsistentes" — só que nesta coluna,
 -- não em valor_unitario). SAFE_CAST sozinho retorna NULL silenciosamente

@@ -1,6 +1,6 @@
 """Jobs de asset: um para a materialização diária completa, outro isolado
 só para o asset de scraping (usado pelo sensor de falha e para a demo do
-retry policy/alerta — ver ADR-006 e o plano do Dia 3)."""
+retry policy/alerta — ver ADR-006 e o plano da Etapa 3)."""
 
 from dagster import AssetSelection, define_asset_job
 

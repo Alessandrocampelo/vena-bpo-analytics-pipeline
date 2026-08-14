@@ -6,7 +6,7 @@
 
 -- Tipagem defensiva (ADR-009): ativo mistura duas convenções booleanas
 -- ('0'/'1' e 'S'/'N') mais nulo; preco_tabela é TEXT, às vezes com
--- prefixo "R$ ". produto_id já é chave íntegra (achado do Dia 1), sem
+-- prefixo "R$ ". produto_id já é chave íntegra (achado da Etapa 1), sem
 -- necessidade de dedup.
 
 with fonte as (

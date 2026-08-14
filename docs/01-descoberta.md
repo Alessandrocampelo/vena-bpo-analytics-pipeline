@@ -1,4 +1,4 @@
-# Descoberta — Dia 1
+# Descoberta — Etapa 1
 
 Objetivo deste documento: registrar o que foi **observado de fato** em cada
 uma das 3 fontes antes de qualquer decisão de design. Toda decisão registrada
@@ -122,7 +122,7 @@ sem nenhum parâmetro, intervalo de poucos segundos entre elas.
 - Como a estrutura muda **por request, não por dia**, um parser fixo
   quebraria em ~2 de cada 3 execuções reais. → informa diretamente a
   necessidade de um parser com múltiplas estratégias, não um seletor
-  único (ADR-006, detalhado tecnicamente no Dia 3).
+  único (ADR-006, detalhado tecnicamente na Etapa 3).
 
 ---
 
